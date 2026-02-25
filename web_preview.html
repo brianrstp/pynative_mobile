@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PyNative Web Preview</title>
+    <style>
+        body { font-family: sans-serif; padding: 1rem; }
+        .component { border: 1px solid #ccc; margin: 0.5rem; padding: 0.5rem; }
+    </style>
+</head>
+<body>
+<h1>PyNative Web Preview</h1>
+<pre id="log"></pre>
+<div id="root"></div>
+<script>
+function render(node, container) {
+    if (!node) return;
+    const el = document.createElement('div');
+    el.className = 'component';
+    el.textContent = `${node.type} (${node.id})`;
+    if (node.props) {
+        const p = document.createElement('div');
+        p.textContent = JSON.stringify(node.props);
+        el.appendChild(p);
+    }
+    container.appendChild(el);
+    (node.children||[]).forEach(c=>render(c, el));
+}
+
+function update(json) {
+    const root = document.getElementById('root');
+    root.innerHTML = '';
+    let obj;
+    try { obj = JSON.parse(json); } catch(e){ return; }
+    if (obj.tree) obj = obj.tree;
+    render(obj, root);
+}
+
+let ws;
+function connect() {
+    const url = (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws';
+    ws = new WebSocket(url);
+    ws.onmessage = e => update(e.data);
+    ws.onopen = () => document.getElementById('log').textContent += 'connected\n';
+    ws.onclose = () => setTimeout(connect, 1000);
+}
+connect();
+</script>
+</body>
+</html>

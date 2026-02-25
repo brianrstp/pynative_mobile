@@ -1,0 +1,19 @@
+[project]
+name = "pynative-mobile"
+version = "0.1.0"
+description = "Reactive Python mobile UI engine with bridge and diffing"
+authors = ["brianrstp <brestu352@gmail.com>"]
+readme = "README.md"
+license = {text = "MIT"}
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "watchdog",
+    "python-socketio",
+    "qrcode",
+    "httpx",
+]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
