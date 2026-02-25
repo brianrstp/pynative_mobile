@@ -68,7 +68,7 @@ Native, a custom Kotlin/Swift shell, or even plain HTML/JS.
 ## 📦 Installation
 
 ```bash
-git clone [<repo>](https://github.com/brianrstp/pynative_mobile)
+git clone https://github.com/brianrstp/pynative_mobile
 cd pynative-mobile
 pip install -r requirements.txt
 pip install .            # optional, installs as package
