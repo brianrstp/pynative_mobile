@@ -230,6 +230,7 @@ class CoreTests(unittest.TestCase):
         class DummyResp:
             def __init__(self, data):
                 self._data = data
+
             def raise_for_status(self):
                 pass
             def json(self):
@@ -239,6 +240,7 @@ class CoreTests(unittest.TestCase):
                 return self
             async def __aexit__(self, exc_type, exc, tb):
                 pass
+
             async def get(self, url):
                 return DummyResp({"hello": "world"})
         orig = httpx.AsyncClient
@@ -250,6 +252,7 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(state.value, {"hello": "world"})
         finally:
             httpx.AsyncClient = orig
+
 
 if __name__ == "__main__":
     unittest.main()
