@@ -99,7 +99,8 @@ class PyNativeApp:
     def _setup_state_listeners(self, component: Component) -> None:
         if hasattr(component, "_states"):
             for state in component._states:
-                state.bind(lambda _, s=state: self.notify_bridge())
+                # specify types for lambda
+                state.bind(lambda _, s=state: self.notify_bridge())  # type: ignore[misc]
         if isinstance(component, Container):
             for child in component.children:
                 self._setup_state_listeners(child)
@@ -107,7 +108,7 @@ class PyNativeApp:
     def notify_bridge(self) -> None:
         for mw in self._middleware:
             try:
-                mw(self)
+                mw(self)  # type: ignore[arg-type]
             except Exception as e:
                 print(f"[Middleware error] {e}")
 
@@ -194,7 +195,7 @@ class PyNativeApp:
         if socketio:
             from .transport import SocketIOBridge
 
-            self.bridge = SocketIOBridge(host=host, port=port)
+            self.bridge = SocketIOBridge(host=host, port=port)  # type: ignore[assignment]
         else:
             from .transport import BridgeServer
 

@@ -75,6 +75,10 @@ def main() -> None:
     if args.command == "run":
         app = load_app(args.path)
         print("Starting PyNative application...")
+        # type of app is Any because loader returns object; cast for mypy
+        from typing import cast
+        from .engine import PyNativeApp as _AppType
+        app = cast(_AppType, app)
         app.start_bridge(host=args.host, port=args.port, socketio=args.socketio)
         if args.watch:
             app._start_watcher(os.path.dirname(os.path.abspath(args.path)) or ".")
@@ -127,6 +131,9 @@ def main() -> None:
     elif args.command == "build":
         # simple bundler: execute target and dump JSON
         app = load_app(args.path)
+        from typing import cast
+        from .engine import PyNativeApp as _AppType
+        app = cast(_AppType, app)
         bundle = app.build()
         out = os.path.splitext(args.path)[0] + ".json"
         with open(out, "w") as f:

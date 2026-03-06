@@ -28,6 +28,7 @@ class TextInput(Component):
         on_change: Optional[Callable[[str], Any]] = None,
     ) -> None:
         super().__init__(name=name, value=value, placeholder=placeholder, on_change=on_change)
+        # no return value
 
 
 class Form(Component):
