@@ -42,6 +42,15 @@ class CLITests(unittest.TestCase):
 
     def test_load_app_success(self):
         code = textwrap.dedent(
+            """
+            from pynative_mobile.engine import PyNativeApp
+            from pynative_mobile.base import Component
+
+            class A(Component):
+                pass
+
+            app = PyNativeApp(root=A())
+            """
         )
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as tf:
             tf.write(code)
@@ -65,6 +74,37 @@ class CLITests(unittest.TestCase):
             sys.argv = ["pynative", "new", tmpdir]
             main()
             self.assertTrue(os.path.isfile(os.path.join(tmpdir, "main.py")))
+        finally:
+            sys.argv = sys_argv
+
+    def test_build_command(self):
+        # create simple app file
+        import tempfile
+        code = "from pynative_mobile import PyNativeApp, Screen, Text\napp = PyNativeApp(root=Screen(title='X'))\n"
+        with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as tf:
+            tf.write(code)
+            path = tf.name
+        try:
+            sys_argv = sys.argv
+            sys.argv = ["pynative", "build", path]
+            from pynative_mobile.cli import main
+            main()
+            out = os.path.splitext(path)[0] + ".json"
+            self.assertTrue(os.path.isfile(out))
+        finally:
+            sys.argv = sys_argv
+            os.unlink(path)
+
+    def test_init_command(self):
+        import tempfile
+        tmpdir = tempfile.mkdtemp()
+        sys_argv = sys.argv
+        try:
+            sys.argv = ["pynative", "init", tmpdir]
+            from pynative_mobile.cli import main
+            main()
+            self.assertTrue(os.path.isfile(os.path.join(tmpdir, "main.py")))
+            self.assertTrue(os.path.isfile(os.path.join(tmpdir, "requirements.txt")))
         finally:
             sys.argv = sys_argv
 

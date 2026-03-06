@@ -49,9 +49,21 @@ class Form(Component):
                 name = child.props["name"]
                 val = child.props.get("value")
                 if name in self.validators:
-                    err = self.validators[name](val)
-                    if err:
-                        errors[name] = err
+                    validator = self.validators[name]
+                    if callable(validator):
+                        try:
+                            if hasattr(validator, "__call__") and hasattr(validator, "__code__") and validator.__code__.co_flags & 0x80:
+                                # coroutine function
+                                import asyncio
+                                err = asyncio.get_event_loop().run_until_complete(validator(val))
+                            else:
+                                err = validator(val)
+                        except RuntimeError:
+                            # no running loop, create temporary
+                            import asyncio
+                            err = asyncio.run(validator(val))
+                        if err:
+                            errors[name] = err
         return errors
 
     def submit(self) -> None:

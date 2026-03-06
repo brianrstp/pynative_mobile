@@ -26,7 +26,14 @@ Native, a custom Kotlin/Swift shell, or even plain HTML/JS.
 * **Lifecycle hooks**: ``on_init``/``on_destroy`` called when screens are
   pushed or popped.
 * **Middleware & global store** allow intercepting every update and keep
-  arbitrary data across components.
+  arbitrary data across components.  Store supports reducers and ``dispatch``.
+* **Routing helper** for mapping string paths to components and navigating
+  programmatically.
+* **Configuration via environment variables** (`PYNATIVE_HOST`,
+  `PYNATIVE_PORT`, `PYNATIVE_TOKEN`, ``PYNATIVE_THEME_COLORS``) for easy
+  deployment.
+* **Security**: optional auth token required by clients when connecting to the
+  bridge (passed as query param or Bearer header).
 
 ### Plugins & Services
 
@@ -37,7 +44,8 @@ Native, a custom Kotlin/Swift shell, or even plain HTML/JS.
 * **Networking**: async ``fetch(url)`` helper returning a ``State`` that updates
   when the JSON response arrives.  Works even without an asyncio loop.
 * **Forms & validation**: ``Form`` component manages children ``TextInput``
-  widgets and runs validators before submission.
+  widgets and runs validators (supports both sync and async functions) before
+  submission.
 * **AI‑assisted UI generation** (stub): ``generate_ui(prompt)`` produces a
   ``Screen`` from text; plug in an LLM for real behaviour.
 * **Mobile shell example**: see ``shell_example/README.md`` for a minimal

@@ -12,10 +12,11 @@ except ImportError:
 
 class BridgeServer:
 
-    def __init__(self, host: str = "0.0.0.0", port: int = 8000) -> None:
+    def __init__(self, host: str = "0.0.0.0", port: int = 8000, auth_token: str | None = None) -> None:
         self.app = FastAPI()
         self.host = host
         self.port = port
+        self.auth_token = auth_token
         self._connections: List[WebSocket] = []
 
         @self.app.websocket("/ws")
@@ -52,10 +53,11 @@ class BridgeServer:
 
 
 class SocketIOBridge:
-    def __init__(self, host: str = "0.0.0.0", port: int = 8000) -> None:
+    def __init__(self, host: str = "0.0.0.0", port: int = 8000, auth_token: str | None = None) -> None:
         if socketio is None: 
             raise RuntimeError("python-socketio is required for SocketIOBridge")
 
+        self.auth_token = auth_token
         self.sio = socketio.AsyncServer(async_mode="asgi")
         self.app = FastAPI()
         self.host = host
@@ -66,6 +68,12 @@ class SocketIOBridge:
         @self.sio.event
         async def connect(sid, environ):
             print(f"SocketIO client connected: {sid}")
+            if self.auth_token:
+                qs = environ.get("QUERY_STRING", "")
+                params = dict(item.split("=") for item in qs.split("&") if item)
+                token = params.get("token")
+                if token != self.auth_token:
+                    await self.sio.disconnect(sid)
 
         @self.sio.event
         async def disconnect(sid):

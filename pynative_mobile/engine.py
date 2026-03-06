@@ -8,6 +8,39 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import os, threading
 
+class Config:
+    """Application configuration loaded from environment variables."""
+
+    def __init__(self):
+        self.host = os.environ.get("PYNATIVE_HOST", "0.0.0.0")
+        self.port = int(os.environ.get("PYNATIVE_PORT", "8000"))
+        self.auth_token = os.environ.get("PYNATIVE_TOKEN")
+        # theme colors may be provided as comma-separated
+        colors = os.environ.get("PYNATIVE_THEME_COLORS")
+        self.theme_colors = {}
+        if colors:
+            for pair in colors.split(","):
+                k, v = pair.split("=")
+                self.theme_colors[k] = v
+
+
+class Router:
+    """Simple router that maps paths to components and parameters."""
+
+    def __init__(self):
+        self.routes = {}
+
+    def add(self, path: str, component: Component):
+        self.routes[path] = component
+
+    def navigate(self, app: "PyNativeApp", path: str) -> None:
+        comp = self.routes.get(path)
+        if comp:
+            app.push(comp)
+        else:
+            raise KeyError(f"route {path} not found")
+
+
 class PyNativeApp:
     def __init__(
         self,
@@ -16,8 +49,14 @@ class PyNativeApp:
         start_server: bool = False,
         watch_path: str | None = None,
     ) -> None:
+        self.config = Config()
         self.stack: List[Component] = [root]
         self.root: Component = root
+        # override theme colors from config if provided
+        if self.config.theme_colors:
+            theme = theme or default_theme
+            for k, v in self.config.theme_colors.items():
+                theme.colors[k] = v
         self.theme = theme or default_theme
         self.event_registry: Dict[str, Callable[..., Any]] = {}
         Component.set_event_registry(self.event_registry)
@@ -30,6 +69,8 @@ class PyNativeApp:
         self.storage = Storage()
         self.bridge: BridgeServer | None = None
         self.store: Dict[str, Any] = {}
+        self._reducers: Dict[str, Callable[[Any, Any], Any]] = {}
+        self.router = Router()
         self._middleware: List[Callable[[Dict[str, Any]], None]] = []
 
         if start_server:
@@ -78,6 +119,14 @@ class PyNativeApp:
         print("[PyNative Bridge] Mengirim data terbaru ke HP...")
         if packet and self.bridge:
             self.bridge.broadcast(packet)
+
+    def dispatch(self, action: str, payload: Any) -> None:
+        """Dispatch an action to update the global store via reducers."""
+        if action in self._reducers:
+            self.store[action] = self._reducers[action](self.store.get(action), payload)
+
+    def register_reducer(self, action: str, reducer: Callable[[Any, Any], Any]) -> None:
+        self._reducers[action] = reducer
 
     def use_middleware(self, func: Callable[["PyNativeApp"], None]) -> None:
         self._middleware.append(func)

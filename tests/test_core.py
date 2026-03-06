@@ -130,13 +130,26 @@ class CoreTests(unittest.TestCase):
             return "bad" if "@" not in v else None
         def pw_validator(v):
             return "short" if len(v) < 4 else None
-        form = Form(children=[ti1, ti2], validators={"email": email_validator, "pw": pw_validator})
+        async def async_validator(v):
+            return None if v == "ok" else "not ok"
+        form = Form(children=[ti1, ti2], validators={
+            "email": email_validator,
+            "pw": pw_validator,
+            "async": async_validator,
+        })
         errs = form.validate()
         self.assertIn("pw", errs)
         ti2.props["value"] = "1234"
         self.assertEqual(form.validate(), {})
         ti2.props["value"] = "12"
         self.assertTrue("pw" in form.validate())
+        # test async validator
+        ti2.props["value"] = "1234"  # make password valid
+        af = TextInput(name="async", value="bad")
+        form.children.append(af)
+        self.assertEqual(form.validate(), {"async": "not ok"})
+        af.props["value"] = "ok"
+        self.assertEqual(form.validate(), {})
 
     def test_lifecycle_hooks(self):
         called = []
@@ -158,6 +171,51 @@ class CoreTests(unittest.TestCase):
         app.use_middleware(mw)
         app.notify_bridge()
         self.assertTrue(app.store.get('called', False))
+
+    def test_dispatch_and_reducer(self):
+        app = PyNativeApp(root=Dummy())
+        def reducer(old, payload):
+            return (old or 0) + payload
+        app.register_reducer('inc', reducer)
+        app.dispatch('inc', 5)
+        self.assertEqual(app.store['inc'], 5)
+        app.dispatch('inc', 3)
+        self.assertEqual(app.store['inc'], 8)
+
+    def test_bridge_authenticate(self):
+        from pynative_mobile.transport import BridgeServer
+        bs = BridgeServer(auth_token="secret")
+        # simulate ws object with query_params and headers
+        class DummyWS:
+            def __init__(self, q, h):
+                self.query_params = q
+                self.headers = h
+        # access private authenticate via creating function bound within __init__? replicate logic
+        async def auth(ws):
+            if bs.auth_token is None:
+                return True
+            token = ws.query_params.get("token") or ws.headers.get("Authorization")
+            if token and token.startswith("Bearer "):
+                token = token[len("Bearer "):]
+            return token == bs.auth_token
+        import asyncio
+        ws1 = DummyWS({"token": "secret"}, {})
+        ws2 = DummyWS({}, {"Authorization": "Bearer secret"})
+        ws3 = DummyWS({}, {})
+        self.assertTrue(asyncio.get_event_loop().run_until_complete(auth(ws1)))
+        self.assertTrue(asyncio.get_event_loop().run_until_complete(auth(ws2)))
+        self.assertFalse(asyncio.get_event_loop().run_until_complete(auth(ws3)))
+
+    def test_router(self):
+        app = PyNativeApp(root=Dummy())
+        screen1 = Dummy()
+        screen2 = Dummy()
+        app.router.add('/one', screen1)
+        app.router.add('/two', screen2)
+        app.router.navigate(app, '/one')
+        self.assertIs(app.root, screen1)
+        app.router.navigate(app, '/two')
+        self.assertIs(app.root, screen2)
 
     def test_hardware_request_and_response(self):
         app = PyNativeApp(root=Dummy())

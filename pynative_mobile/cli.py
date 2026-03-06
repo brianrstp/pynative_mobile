@@ -65,6 +65,12 @@ def main() -> None:
     new_parser = sub.add_parser("new", help="scaffold a new PyNative project")
     new_parser.add_argument("directory", nargs="?", default=".", help="folder to create project in")
 
+    build_parser = sub.add_parser("build", help="build a JSON bundle for deployment")
+    build_parser.add_argument("path", nargs="?", default="main.py")
+    
+    init_parser = sub.add_parser("init", help="initialize a fresh PyNative project structure")
+    init_parser.add_argument("directory", nargs="?", default=".")
+
     args = parser.parse_args()
     if args.command == "run":
         app = load_app(args.path)
@@ -117,6 +123,30 @@ def main() -> None:
             print(f"Created {main_py}")
         else:
             print(f"{main_py} already exists")
+
+    elif args.command == "build":
+        # simple bundler: execute target and dump JSON
+        app = load_app(args.path)
+        bundle = app.build()
+        out = os.path.splitext(args.path)[0] + ".json"
+        with open(out, "w") as f:
+            f.write(bundle)
+        print(f"Wrote bundle to {out}")
+
+    elif args.command == "init":
+        dest = os.path.abspath(args.directory)
+        if not os.path.isdir(dest):
+            os.makedirs(dest, exist_ok=True)
+        files = {"main.py": "from pynative_mobile import PyNativeApp, Screen, Text\n\napp = PyNativeApp(root=Screen(title='Hello', children=[Text('World')]))\n",
+                 "requirements.txt": "fastapi\nuvicorn\nwatchdog\npython-socketio\nqrcode\nhttpx\n"}
+        for name, content in files.items():
+            path = os.path.join(dest, name)
+            if not os.path.exists(path):
+                with open(path, "w") as f:
+                    f.write(content)
+                print(f"Created {path}")
+            else:
+                print(f"{path} already exists")
     else:
         parser.print_help()
 
