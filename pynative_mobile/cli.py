@@ -1,9 +1,9 @@
 import argparse
 import os
-import sys
+import sys  # noqa: F401
 import socket
 import importlib.util
-from typing import Optional
+from typing import Optional  # noqa: F401
 
 try:
     import qrcode
@@ -61,7 +61,7 @@ def main() -> None:
     preview_parser.add_argument("--file", default="web_preview.html", help="path to preview HTML file")
 
     doctor_parser = sub.add_parser("doctor", help="check for required dependencies and environment")
-
+        # parser variable is unused but kept for API consistency
     new_parser = sub.add_parser("new", help="scaffold a new PyNative project")
     new_parser.add_argument("directory", nargs="?", default=".", help="folder to create project in")
 

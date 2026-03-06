@@ -1,12 +1,15 @@
 import json
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List  # noqa: F401
 from .theme import default_theme
 from .base import Component, Container, PROP_UPDATE_LISTENERS
 from .assets import AssetManager
 from .transport import BridgeServer
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import os, threading
+import os
+import threading
+
+
 
 class Config:
     """Application configuration loaded from environment variables."""
@@ -22,6 +25,9 @@ class Config:
             for pair in colors.split(","):
                 k, v = pair.split("=")
                 self.theme_colors[k] = v
+
+
+
 
 
 class Router:
@@ -72,6 +78,7 @@ class PyNativeApp:
         self._reducers: Dict[str, Callable[[Any, Any], Any]] = {}
         self.router = Router()
         self._middleware: List[Callable[[Dict[str, Any]], None]] = []
+
 
         if start_server:
             self.start_bridge()

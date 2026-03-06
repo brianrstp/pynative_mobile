@@ -227,6 +227,7 @@ class CoreTests(unittest.TestCase):
 
     def test_network_fetch_mock(self):
         import httpx
+
         class DummyResp:
             def __init__(self, data):
                 self._data = data

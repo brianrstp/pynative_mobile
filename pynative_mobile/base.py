@@ -44,7 +44,8 @@ class Component:
     def _update_prop(self, key: str, value: Any) -> None:
         self.props[key] = value
         print(
-            f">>> UI Update: Properti '{key}' pada {self.type} ({self.id}) berubah jadi '{value}'"
+            f">>> UI Update: Properti '{key}' pada {self.type} ({self.id}) "
+            f"berubah jadi '{value}'",
         )
 
         for listener in PROP_UPDATE_LISTENERS:
@@ -65,6 +66,7 @@ class Container(Component):
         self.children: List[Component] = children or []
 
     def to_dict(self) -> Dict[str, Any]:
+
         data = super().to_dict()
         data["children"] = [child.to_dict() for child in self.children]
         return data
